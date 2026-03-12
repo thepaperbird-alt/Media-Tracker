@@ -49,7 +49,11 @@ export default function App() {
   const [inputSeason, setInputSeason] = useState('');
   const [inputPlatform, setInputPlatform] = useState('');
   const [inputSummary, setInputSummary] = useState('');
-  const [filter, setFilter] = useState<FilterType>('all');
+  const [columnFilters, setColumnFilters] = useState<Record<Column, FilterType>>({
+    'To Watch': 'all',
+    'Currently Watching': 'all',
+    'Completed': 'all'
+  });
   const [isFetchingSummary, setIsFetchingSummary] = useState(false);
 
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
@@ -191,7 +195,12 @@ export default function App() {
     setItems(items.filter(item => item.id !== id));
   };
 
-  const filteredItems = items.filter(item => filter === 'all' || item.type === filter);
+  const toggleColumnFilter = (column: Column, type: FilterType) => {
+    setColumnFilters(prev => ({
+      ...prev,
+      [column]: prev[column] === type ? 'all' : type
+    }));
+  };
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-100 p-4 md:p-8 font-sans selection:bg-indigo-500/30">
@@ -202,27 +211,6 @@ export default function App() {
           </h1>
           <p className="text-zinc-400 text-lg">Manual Kanban board for your shows and movies</p>
         </header>
-
-        <div className="flex justify-center mb-10">
-          <div className="bg-zinc-900/80 p-1.5 rounded-xl border border-zinc-800/50 inline-flex items-center gap-1 shadow-sm">
-            <div className="px-3 text-zinc-500">
-              <Filter size={16} />
-            </div>
-            {(['all', 'tv', 'movie'] as const).map(f => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
-                  filter === f 
-                    ? 'bg-zinc-800 text-zinc-100 shadow-sm ring-1 ring-zinc-700/50' 
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
-                }`}
-              >
-                {f === 'all' ? 'All Media' : f === 'tv' ? 'TV Shows' : 'Movies'}
-              </button>
-            ))}
-          </div>
-        </div>
 
         <form onSubmit={handleAddItem} className="mb-16 max-w-3xl mx-auto bg-zinc-900/40 p-5 md:p-6 rounded-3xl border border-zinc-800/50 shadow-lg">
           <div className="flex flex-col gap-4">
@@ -328,14 +316,32 @@ export default function App() {
                     </div>
                     <h2 className="font-semibold text-zinc-200 text-lg">{col.id}</h2>
                   </div>
+                  
+                  <div className="flex items-center gap-1 ml-auto mr-3">
+                    <button 
+                      onClick={() => toggleColumnFilter(col.id, 'tv')}
+                      className={`p-1.5 rounded-lg transition-all ${columnFilters[col.id] === 'tv' ? 'bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30' : 'text-zinc-600 hover:text-zinc-400 hover:bg-zinc-800/50'}`}
+                      title="Filter TV Shows"
+                    >
+                      <Tv size={16} />
+                    </button>
+                    <button 
+                      onClick={() => toggleColumnFilter(col.id, 'movie')}
+                      className={`p-1.5 rounded-lg transition-all ${columnFilters[col.id] === 'movie' ? 'bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/30' : 'text-zinc-600 hover:text-zinc-400 hover:bg-zinc-800/50'}`}
+                      title="Filter Movies"
+                    >
+                      <Popcorn size={16} />
+                    </button>
+                  </div>
+
                   <span className="bg-zinc-800 text-zinc-400 text-sm py-1 px-3 rounded-full font-mono font-medium">
-                    {filteredItems.filter((item) => item.column === col.id).length}
+                    {items.filter((item) => item.column === col.id && (columnFilters[col.id] === 'all' || item.type === columnFilters[col.id])).length}
                   </span>
                 </div>
 
                 <div className="flex-1 flex flex-col gap-3">
-                  {filteredItems
-                    .filter((item) => item.column === col.id)
+                  {items
+                    .filter((item) => item.column === col.id && (columnFilters[col.id] === 'all' || item.type === columnFilters[col.id]))
                     .map((item) => (
                       <div
                         key={item.id}
@@ -400,7 +406,7 @@ export default function App() {
                       </div>
                     ))}
                   
-                  {filteredItems.filter((item) => item.column === col.id).length === 0 && (
+                  {items.filter((item) => item.column === col.id && (columnFilters[col.id] === 'all' || item.type === columnFilters[col.id])).length === 0 && (
                     <div className="flex-1 flex items-center justify-center border-2 border-dashed border-zinc-800/50 rounded-2xl text-zinc-600 text-sm font-medium">
                       Drop items here
                     </div>
