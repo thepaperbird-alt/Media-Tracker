@@ -207,9 +207,9 @@ export default function App() {
       <div className="max-w-6xl mx-auto">
         <header className="mb-8 text-center pt-8">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3 text-transparent bg-clip-text bg-gradient-to-r from-zinc-100 to-zinc-500">
-            Media Tracker
+            Watcher
           </h1>
-          <p className="text-zinc-400 text-lg">Manual Kanban board for your shows and movies</p>
+          <p className="text-zinc-400 text-lg">Keep an eye on your movies and shows</p>
         </header>
 
         <form onSubmit={handleAddItem} className="mb-16 max-w-3xl mx-auto bg-zinc-900/40 p-5 md:p-6 rounded-3xl border border-zinc-800/50 shadow-lg">

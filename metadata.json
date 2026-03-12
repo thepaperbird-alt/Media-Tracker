@@ -1,5 +1,5 @@
 {
-  "name": "Media Tracker Kanban",
-  "description": "A manual, Kanban-style web application to track TV shows and movies.",
+  "name": "Watcher",
+  "description": "Keep an eye on your movies and shows",
   "requestFramePermissions": []
 }
