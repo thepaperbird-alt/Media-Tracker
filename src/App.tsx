@@ -21,10 +21,10 @@ interface MediaItem {
   summary?: string;
 }
 
-const COLUMNS: { id: Column; icon: React.ReactNode; color: string }[] = [
-  { id: 'To Watch', icon: <Film size={18} />, color: 'text-blue-400' },
-  { id: 'Currently Watching', icon: <Tv size={18} />, color: 'text-amber-400' },
-  { id: 'Completed', icon: <CheckCircle2 size={18} />, color: 'text-emerald-400' },
+const COLUMNS: { id: Column; title: string; icon: React.ReactNode; color: string; innerBg: string; borderColor: string; textColor: string; columnBg: string }[] = [
+  { id: 'To Watch', title: 'to watch', icon: <Film size={18} />, color: 'text-blue-500', innerBg: 'bg-blue-50', borderColor: 'border-blue-300', textColor: 'text-blue-900', columnBg: 'bg-[#60D5E8]' },
+  { id: 'Currently Watching', title: 'current', icon: <Tv size={18} />, color: 'text-rose-500', innerBg: 'bg-rose-50', borderColor: 'border-rose-300', textColor: 'text-rose-900', columnBg: 'bg-[#FF9EE0]' },
+  { id: 'Completed', title: 'completed', icon: <CheckCircle2 size={18} />, color: 'text-emerald-500', innerBg: 'bg-emerald-50', borderColor: 'border-emerald-300', textColor: 'text-emerald-900', columnBg: 'bg-[#D0F8CE]' },
 ];
 
 export default function App() {
@@ -250,33 +250,25 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-zinc-100 p-4 md:p-8 font-sans selection:bg-indigo-500/30">
+    <div className="min-h-screen bg-[#F8F9FA] text-gray-900 p-4 md:p-8 font-sans selection:bg-indigo-500/30">
       <div className="max-w-6xl mx-auto">
-        <header className="mb-8 text-center pt-8">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3 text-transparent bg-clip-text bg-gradient-to-r from-zinc-100 to-zinc-500">
+        <header className="mb-8 pt-8 flex justify-between items-center">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tighter text-black">
             Watcher
           </h1>
-          <p className="text-zinc-400 text-lg">Keep an eye on your movies and shows</p>
-        </header>
-
-        {/* Add Component - Collapsible on Mobile */}
-        <div className="mb-12 max-w-3xl mx-auto">
           <button 
             onClick={() => setIsFormExpanded(!isFormExpanded)}
-            className="w-full md:hidden flex items-center justify-between bg-zinc-900/60 border border-zinc-800/50 p-4 rounded-2xl text-zinc-300 hover:text-zinc-100 transition-all mb-4"
+            className="bg-[#E5E5E5] text-black font-bold py-2 px-4 w-32 md:w-64 text-right hover:bg-[#D4D4D4] transition-colors"
           >
-            <div className="flex items-center gap-2">
-              <Plus size={18} className="text-indigo-400" />
-              <span className="font-medium">Add New Content</span>
-            </div>
-            {isFormExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            +Add
           </button>
+        </header>
 
+        {/* Add Component - Collapsible */}
+        <div className={`mb-12 max-w-3xl ml-auto ${isFormExpanded ? 'block' : 'hidden'}`}>
           <form 
             onSubmit={handleAddItem} 
-            className={`${
-              isFormExpanded ? 'flex' : 'hidden md:flex'
-            } flex-col gap-4 bg-zinc-900/40 p-4 md:p-6 rounded-3xl border border-zinc-800/50 shadow-lg transition-all duration-300 overflow-hidden`}
+            className="flex flex-col gap-4 bg-white p-4 md:p-6 rounded-3xl border border-gray-200 shadow-sm transition-all duration-300 overflow-hidden"
           >
             <div className="flex flex-col md:flex-row gap-3 md:gap-4">
               <input
@@ -285,12 +277,12 @@ export default function App() {
                 onChange={(e) => setInputValue(e.target.value)}
                 onBlur={() => fetchSummary(false)}
                 placeholder="Title..."
-                className="flex-1 bg-zinc-900/80 border border-zinc-700/50 rounded-xl px-4 py-2.5 md:py-3 text-sm md:text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all placeholder:text-zinc-500"
+                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 md:py-3 text-sm md:text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all placeholder:text-gray-400 focus:bg-white"
               />
               <select
                 value={inputType}
                 onChange={(e) => setInputType(e.target.value as MediaType)}
-                className="bg-zinc-900/80 border border-zinc-700/50 rounded-xl px-4 py-2.5 md:py-3 text-sm md:text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-zinc-200 md:w-40 appearance-none cursor-pointer"
+                className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 md:py-3 text-sm md:text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-gray-700 md:w-40 appearance-none cursor-pointer focus:bg-white"
               >
                 <option value="movie">🎬 Movie</option>
                 <option value="tv">📺 TV Show</option>
@@ -303,7 +295,7 @@ export default function App() {
                 value={inputPlatform}
                 onChange={(e) => setInputPlatform(e.target.value)}
                 placeholder="Platform (e.g. Netflix)"
-                className="flex-1 bg-zinc-900/80 border border-zinc-700/50 rounded-xl px-4 py-2.5 md:py-3 text-sm md:text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all placeholder:text-zinc-500"
+                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 md:py-3 text-sm md:text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all placeholder:text-gray-400 focus:bg-white"
               />
               {inputType === 'tv' && (
                 <input
@@ -311,7 +303,7 @@ export default function App() {
                   value={inputSeason}
                   onChange={(e) => setInputSeason(e.target.value)}
                   placeholder="Season"
-                  className="md:w-32 bg-zinc-900/80 border border-zinc-700/50 rounded-xl px-4 py-2.5 md:py-3 text-sm md:text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all placeholder:text-zinc-500"
+                  className="md:w-32 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 md:py-3 text-sm md:text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all placeholder:text-gray-400 focus:bg-white"
                 />
               )}
               <button
@@ -327,15 +319,15 @@ export default function App() {
         </div>
 
         {/* Mobile Tabs */}
-        <div className="flex md:hidden bg-zinc-900/60 p-1 rounded-2xl mb-6 border border-zinc-800/50 sticky top-4 z-30 backdrop-blur-md">
+        <div className="flex md:hidden bg-white p-1 rounded-2xl mb-6 border border-gray-200 shadow-sm sticky top-4 z-30 backdrop-blur-md">
           {COLUMNS.map((col) => (
             <button
               key={col.id}
               onClick={() => setActiveTab(col.id)}
               className={`flex-1 flex flex-col items-center py-2.5 rounded-xl transition-all ${
                 activeTab === col.id 
-                  ? 'bg-zinc-800 text-zinc-100 shadow-sm' 
-                  : 'text-zinc-500'
+                  ? 'bg-gray-100 text-gray-900 shadow-sm' 
+                  : 'text-gray-400 hover:text-gray-600'
               }`}
             >
               <div className={activeTab === col.id ? col.color : ''}>
@@ -354,52 +346,46 @@ export default function App() {
             return (
               <div
                 key={col.id}
-                onDragOver={(e) => handleDragOverColumn(e, col.id)}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDropOnColumn(e, col.id)}
-                className={`border rounded-3xl p-5 flex flex-col transition-all duration-300 ${
+                className={`flex flex-col transition-all duration-300 ${
                   isVisible ? 'flex' : 'hidden md:flex'
-                } ${
-                  isMiddle 
-                    ? 'md:-translate-y-6 md:min-h-[660px] shadow-2xl bg-zinc-800/40 border-zinc-700/60' 
-                    : 'md:min-h-[600px] bg-zinc-900/40 border-zinc-800/50'
-                } ${
-                  dragOverColumn === col.id 
-                    ? 'border-indigo-500/50 bg-zinc-800/60 ring-4 ring-indigo-500/10' 
-                    : ''
                 }`}
               >
-                <div className="flex items-center justify-between mb-6 px-1">
-                  <div className="flex items-center gap-2">
-                    <div className={`p-2 rounded-xl bg-zinc-800/50 ${col.color}`}>
-                      {col.icon}
+                <h2 className="text-center font-extrabold text-2xl tracking-tighter text-black mb-4">{col.title}</h2>
+                
+                <div
+                  onDragOver={(e) => handleDragOverColumn(e, col.id)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDropOnColumn(e, col.id)}
+                  className={`flex-1 flex flex-col p-4 md:p-5 rounded-[2rem] transition-all duration-300 ${col.columnBg} ${
+                    dragOverColumn === col.id 
+                      ? 'ring-4 ring-black/10' 
+                      : ''
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-4 px-1">
+                    <div className="flex items-center gap-1">
+                      <button 
+                        onClick={() => toggleColumnFilter(col.id, 'tv')}
+                        className={`p-1.5 rounded-lg transition-all ${columnFilters[col.id] === 'tv' ? 'bg-black/20 text-black' : 'text-black/40 hover:text-black hover:bg-black/10'}`}
+                        title="Filter TV Shows"
+                      >
+                        <Tv size={16} />
+                      </button>
+                      <button 
+                        onClick={() => toggleColumnFilter(col.id, 'movie')}
+                        className={`p-1.5 rounded-lg transition-all ${columnFilters[col.id] === 'movie' ? 'bg-black/20 text-black' : 'text-black/40 hover:text-black hover:bg-black/10'}`}
+                        title="Filter Movies"
+                      >
+                        <Popcorn size={16} />
+                      </button>
                     </div>
-                    <h2 className="font-semibold text-zinc-200 text-lg">{col.id}</h2>
-                  </div>
-                  
-                  <div className="flex items-center gap-1 ml-auto mr-3">
-                    <button 
-                      onClick={() => toggleColumnFilter(col.id, 'tv')}
-                      className={`p-1.5 rounded-lg transition-all ${columnFilters[col.id] === 'tv' ? 'bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30' : 'text-zinc-600 hover:text-zinc-400 hover:bg-zinc-800/50'}`}
-                      title="Filter TV Shows"
-                    >
-                      <Tv size={16} />
-                    </button>
-                    <button 
-                      onClick={() => toggleColumnFilter(col.id, 'movie')}
-                      className={`p-1.5 rounded-lg transition-all ${columnFilters[col.id] === 'movie' ? 'bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/30' : 'text-zinc-600 hover:text-zinc-400 hover:bg-zinc-800/50'}`}
-                      title="Filter Movies"
-                    >
-                      <Popcorn size={16} />
-                    </button>
+
+                    <span className="bg-black/10 text-black text-xs py-1 px-2.5 rounded-full font-bold">
+                      {items.filter((item) => item.column === col.id && (columnFilters[col.id] === 'all' || item.type === columnFilters[col.id])).length}
+                    </span>
                   </div>
 
-                  <span className="bg-zinc-800 text-zinc-400 text-sm py-1 px-3 rounded-full font-mono font-medium">
-                    {items.filter((item) => item.column === col.id && (columnFilters[col.id] === 'all' || item.type === columnFilters[col.id])).length}
-                  </span>
-                </div>
-
-                <div className="flex-1 flex flex-col gap-3">
+                  <div className="flex-1 flex flex-col gap-4">
                   {items
                     .filter((item) => item.column === col.id && (columnFilters[col.id] === 'all' || item.type === columnFilters[col.id]))
                     .map((item) => (
@@ -411,75 +397,40 @@ export default function App() {
                         onDragEnd={(e) => handleDragEnd(e, item.id)}
                         onDragOver={(e) => handleDragOverItem(e, item.id)}
                         onDrop={(e) => handleDropOnItem(e, item.id, col.id)}
-                        className={`group relative bg-zinc-800/90 hover:bg-zinc-700/80 border-y border-r border-l-4 rounded-2xl p-4 cursor-grab active:cursor-grabbing transition-all shadow-sm flex items-start gap-3 ${
-                          item.type === 'movie' 
-                            ? 'border-l-blue-500 border-y-zinc-700/50 border-r-zinc-700/50' 
-                            : 'border-l-purple-500 border-y-zinc-700/50 border-r-zinc-700/50'
-                        } ${
-                          dragOverItemId === item.id ? 'border-t-2 border-t-indigo-500 -mt-1' : ''
+                        className={`group relative bg-white border-2 border-dashed border-gray-200 rounded-3xl p-2.5 cursor-grab active:cursor-grabbing transition-all shadow-sm ${
+                          dragOverItemId === item.id ? 'border-t-indigo-500 -mt-1' : 'hover:border-gray-300 hover:shadow-md'
                         }`}
                       >
-                        <div className="text-zinc-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 -ml-2">
-                          <GripVertical size={16} />
-                        </div>
-                        
-                        <div className="shrink-0 mt-0.5">
-                          {item.type === 'movie' ? (
-                            <Popcorn size={18} className="text-blue-400" />
-                          ) : (
-                            <Tv size={18} className="text-purple-400" />
-                          )}
-                        </div>
-
-                        <div className="flex-1 pr-6">
-                          <div className="font-medium text-zinc-100 leading-snug">{item.title}</div>
-                          
-                          {item.summary && (
-                            <div className="text-xs text-zinc-400 mt-1.5 leading-relaxed line-clamp-2">
-                              {item.summary}
-                            </div>
-                          )}
-
-                          <div className="text-[11px] font-medium text-zinc-400 mt-2.5 flex items-center gap-2 flex-wrap">
-                            {item.type === 'tv' && (
-                              <div className="group/field relative">
-                                <span className="bg-zinc-900/80 border border-zinc-700/50 px-2 py-0.5 rounded-md text-purple-300 cursor-pointer hover:bg-zinc-800 transition-colors flex items-center gap-1">
-                                  S{item.season || '?'}
-                                  <Pencil size={8} className="opacity-0 group-hover/field:opacity-100" />
-                                </span>
-                                <input 
-                                  type="text"
-                                  defaultValue={item.season || ''}
-                                  onBlur={(e) => handleUpdateItem(item.id, { season: e.target.value })}
-                                  onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-                                  className="absolute inset-0 w-full opacity-0 focus:opacity-100 bg-zinc-900 border border-indigo-500 rounded-md px-2 py-0.5 text-purple-300 outline-none z-10"
-                                />
-                              </div>
-                            )}
-                            
-                            <div className="group/field relative">
-                              <span className="bg-zinc-900/80 border border-zinc-700/50 px-2 py-0.5 rounded-md text-zinc-300 cursor-pointer hover:bg-zinc-800 transition-colors flex items-center gap-1">
-                                {item.platform || 'Add OTT'}
-                                <Pencil size={8} className="opacity-0 group-hover/field:opacity-100" />
-                              </span>
-                              <input 
-                                type="text"
-                                defaultValue={item.platform || ''}
-                                onBlur={(e) => handleUpdateItem(item.id, { platform: e.target.value })}
-                                onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-                                className="absolute inset-0 w-full opacity-0 focus:opacity-100 bg-zinc-900 border border-indigo-500 rounded-md px-2 py-0.5 text-zinc-300 outline-none z-10"
-                              />
-                            </div>
+                        {/* Top row: Platform and Type */}
+                        <div className="flex justify-between items-center px-2 pb-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                          <span className="truncate pr-2">{item.platform || 'No Platform'}</span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {item.type === 'tv' && item.season && <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">S{item.season}</span>}
+                            {item.type === 'movie' ? <Film size={12} /> : <Tv size={12} />}
                           </div>
                         </div>
                         
-                        <div className="absolute right-3 top-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* Colored inner block */}
+                        <div className={`${col.innerBg} border-l-4 ${col.borderColor} rounded-2xl p-3.5 flex items-start gap-3`}>
+                          <div className="flex-1 pr-4">
+                            <div className={`font-semibold ${col.textColor} leading-snug text-[15px]`}>{item.title}</div>
+                            
+                            {item.summary && (
+                              <div className={`text-xs ${col.textColor} opacity-75 mt-1.5 leading-relaxed line-clamp-2`}>
+                                {item.summary}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Actions (Hover) */}
+                        <div className="absolute right-4 top-12 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-sm rounded-xl p-1.5 shadow-sm border border-gray-100">
                           <button 
                             onClick={() => startEditing(item)}
-                            className="text-zinc-500 hover:text-indigo-400 transition-colors"
+                            className="text-gray-400 hover:text-indigo-500 transition-colors p-1"
                             aria-label="Edit item"
                           >
-                            <Pencil size={16} />
+                            <Pencil size={14} />
                           </button>
                           
                           {/* Mobile Quick Move Button */}
@@ -489,19 +440,19 @@ export default function App() {
                                 e.stopPropagation();
                                 setShowMoveMenu(showMoveMenu === item.id ? null : item.id);
                               }}
-                              className="text-zinc-500 hover:text-amber-400 transition-colors"
+                              className="text-gray-400 hover:text-amber-500 transition-colors p-1"
                               aria-label="Move item"
                             >
-                              <ArrowRightLeft size={16} />
+                              <ArrowRightLeft size={14} />
                             </button>
                             
                             {showMoveMenu === item.id && (
-                              <div className="absolute right-0 top-full mt-2 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-40 py-1 min-w-[140px] animate-in fade-in slide-in-from-top-2 duration-200">
+                              <div className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-40 py-1 min-w-[140px] animate-in fade-in slide-in-from-top-2 duration-200">
                                 {COLUMNS.filter(c => c.id !== item.column).map(c => (
                                   <button
                                     key={c.id}
                                     onClick={() => moveItem(item.id, c.id)}
-                                    className="w-full text-left px-4 py-2 text-xs font-medium hover:bg-zinc-800 transition-colors flex items-center gap-2"
+                                    className="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
                                   >
                                     <span className={c.color}>{c.icon}</span>
                                     <span>Move to {c.id.split(' ')[0]}</span>
@@ -513,36 +464,37 @@ export default function App() {
 
                           <button 
                             onClick={() => handleDelete(item.id)}
-                            className="text-zinc-500 hover:text-red-400 transition-colors"
+                            className="text-gray-400 hover:text-red-500 transition-colors p-1"
                             aria-label="Delete item"
                           >
-                            <X size={16} />
+                            <X size={14} />
                           </button>
                         </div>
                       </div>
                     ))}
                   
                   {items.filter((item) => item.column === col.id && (columnFilters[col.id] === 'all' || item.type === columnFilters[col.id])).length === 0 && (
-                    <div className="flex-1 flex items-center justify-center border-2 border-dashed border-zinc-800/50 rounded-2xl text-zinc-600 text-sm font-medium">
+                    <div className="flex-1 flex items-center justify-center border-2 border-dashed border-gray-200 rounded-3xl text-gray-400 text-sm font-medium min-h-[120px]">
                       Drop items here
                     </div>
                   )}
                 </div>
               </div>
-            );
-          })}
+            </div>
+          );
+        })}
         </div>
       </div>
 
       {/* Edit Modal */}
       {editingItemId && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-zinc-100">Edit Details</h3>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-gray-200 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-xl font-semibold text-gray-900">Edit Details</h3>
               <button 
                 onClick={() => setEditingItemId(null)}
-                className="text-zinc-500 hover:text-zinc-300 transition-colors"
+                className="text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <X size={20} />
               </button>
@@ -550,61 +502,61 @@ export default function App() {
             
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1.5 ml-1">Title</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Title</label>
                 <input 
                   type="text"
                   value={editForm.title || ''}
                   onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all focus:bg-white"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1.5 ml-1">Platform</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Platform</label>
                   <input 
                     type="text"
                     value={editForm.platform || ''}
                     onChange={(e) => setEditForm({ ...editForm, platform: e.target.value })}
                     placeholder="e.g. Netflix"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all focus:bg-white"
                   />
                 </div>
                 {editForm.type === 'tv' && (
                   <div>
-                    <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1.5 ml-1">Season</label>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Season</label>
                     <input 
                       type="text"
                       value={editForm.season || ''}
                       onChange={(e) => setEditForm({ ...editForm, season: e.target.value })}
                       placeholder="e.g. 1"
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all focus:bg-white"
                     />
                   </div>
                 )}
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1.5 ml-1">Summary</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Summary</label>
                 <textarea 
                   rows={3}
                   value={editForm.summary || ''}
                   onChange={(e) => setEditForm({ ...editForm, summary: e.target.value })}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all resize-none"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all resize-none focus:bg-white"
                 />
               </div>
             </div>
 
-            <div className="p-6 bg-zinc-950/50 border-t border-zinc-800 flex gap-3">
+            <div className="p-6 bg-gray-50/50 border-t border-gray-100 flex gap-3">
               <button 
                 onClick={() => setEditingItemId(null)}
-                className="flex-1 px-4 py-3 rounded-xl font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 transition-all"
+                className="flex-1 px-4 py-3 rounded-xl font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all"
               >
                 Cancel
               </button>
               <button 
                 onClick={saveEdit}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95"
+                className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95"
               >
                 <Save size={18} />
                 <span>Save Changes</span>
