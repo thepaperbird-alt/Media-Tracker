@@ -4,7 +4,7 @@
  */
 
 import React, { useState, DragEvent, useEffect } from 'react';
-import { Plus, GripVertical, Film, Tv, CheckCircle2, X, Popcorn, Filter, Loader2, Sparkles } from 'lucide-react';
+import { Plus, GripVertical, Film, Tv, CheckCircle2, X, Popcorn, Filter, Loader2, Sparkles, Pencil, Save, ChevronRight, ArrowRightLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 
 type Column = 'To Watch' | 'Currently Watching' | 'Completed';
@@ -55,6 +55,12 @@ export default function App() {
     'Completed': 'all'
   });
   const [isFetchingSummary, setIsFetchingSummary] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Partial<MediaItem>>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<Column>('To Watch');
+  const [showMoveMenu, setShowMoveMenu] = useState<string | null>(null);
+  const [isFormExpanded, setIsFormExpanded] = useState(false);
 
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<Column | null>(null);
@@ -84,9 +90,28 @@ export default function App() {
     }
   };
 
-  const handleAddItem = (e: React.FormEvent) => {
+  const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
+
+    let summary = inputSummary.trim();
+    
+    // Auto-fetch summary if empty
+    if (!summary) {
+      setIsFetchingSummary(true);
+      try {
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const response = await ai.models.generateContent({
+          model: 'gemini-3-flash-preview',
+          contents: `Write a brief, one-sentence logline/summary for the ${inputType} '${inputValue.trim()}'. Do not include the title in the summary. Keep it under 120 characters. Return ONLY the summary text, without quotes. If you don't know the movie or show, return exactly an empty string.`,
+        });
+        summary = response.text?.trim() || '';
+      } catch (error) {
+        console.error('Error fetching summary:', error);
+      } finally {
+        setIsFetchingSummary(false);
+      }
+    }
 
     const newItem: MediaItem = {
       id: crypto.randomUUID(),
@@ -95,7 +120,7 @@ export default function App() {
       type: inputType,
       season: inputType === 'tv' ? inputSeason.trim() : undefined,
       platform: inputPlatform.trim() || undefined,
-      summary: inputSummary.trim() || undefined,
+      summary: summary || undefined,
     };
 
     setItems([...items, newItem]);
@@ -195,11 +220,33 @@ export default function App() {
     setItems(items.filter(item => item.id !== id));
   };
 
+  const handleUpdateItem = (id: string, updates: Partial<MediaItem>) => {
+    setItems(items.map(item => item.id === id ? { ...item, ...updates } : item));
+  };
+
+  const startEditing = (item: MediaItem) => {
+    setEditingItemId(item.id);
+    setEditForm(item);
+  };
+
+  const saveEdit = () => {
+    if (editingItemId && editForm) {
+      handleUpdateItem(editingItemId, editForm);
+      setEditingItemId(null);
+      setEditForm({});
+    }
+  };
+
   const toggleColumnFilter = (column: Column, type: FilterType) => {
     setColumnFilters(prev => ({
       ...prev,
       [column]: prev[column] === type ? 'all' : type
     }));
+  };
+
+  const moveItem = (id: string, targetColumn: Column) => {
+    setItems(items.map(item => item.id === id ? { ...item, column: targetColumn } : item));
+    setShowMoveMenu(null);
   };
 
   return (
@@ -212,87 +259,98 @@ export default function App() {
           <p className="text-zinc-400 text-lg">Keep an eye on your movies and shows</p>
         </header>
 
-        <form onSubmit={handleAddItem} className="mb-16 max-w-3xl mx-auto bg-zinc-900/40 p-5 md:p-6 rounded-3xl border border-zinc-800/50 shadow-lg">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col md:flex-row gap-4">
+        {/* Add Component - Collapsible on Mobile */}
+        <div className="mb-12 max-w-3xl mx-auto">
+          <button 
+            onClick={() => setIsFormExpanded(!isFormExpanded)}
+            className="w-full md:hidden flex items-center justify-between bg-zinc-900/60 border border-zinc-800/50 p-4 rounded-2xl text-zinc-300 hover:text-zinc-100 transition-all mb-4"
+          >
+            <div className="flex items-center gap-2">
+              <Plus size={18} className="text-indigo-400" />
+              <span className="font-medium">Add New Content</span>
+            </div>
+            {isFormExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </button>
+
+          <form 
+            onSubmit={handleAddItem} 
+            className={`${
+              isFormExpanded ? 'flex' : 'hidden md:flex'
+            } flex-col gap-4 bg-zinc-900/40 p-4 md:p-6 rounded-3xl border border-zinc-800/50 shadow-lg transition-all duration-300 overflow-hidden`}
+          >
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4">
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onBlur={() => fetchSummary(false)}
-                placeholder="Add a show or movie title..."
-                className="flex-1 bg-zinc-900/80 border border-zinc-700/50 rounded-xl px-4 py-3 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all placeholder:text-zinc-500"
+                placeholder="Title..."
+                className="flex-1 bg-zinc-900/80 border border-zinc-700/50 rounded-xl px-4 py-2.5 md:py-3 text-sm md:text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all placeholder:text-zinc-500"
               />
               <select
                 value={inputType}
                 onChange={(e) => setInputType(e.target.value as MediaType)}
-                className="bg-zinc-900/80 border border-zinc-700/50 rounded-xl px-4 py-3 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-zinc-200 md:w-40 appearance-none cursor-pointer"
+                className="bg-zinc-900/80 border border-zinc-700/50 rounded-xl px-4 py-2.5 md:py-3 text-sm md:text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-zinc-200 md:w-40 appearance-none cursor-pointer"
               >
                 <option value="movie">🎬 Movie</option>
                 <option value="tv">📺 TV Show</option>
               </select>
             </div>
             
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4">
               <input
                 type="text"
                 value={inputPlatform}
                 onChange={(e) => setInputPlatform(e.target.value)}
-                placeholder="OTT Platform (e.g., Netflix, Max)"
-                className="flex-1 bg-zinc-900/80 border border-zinc-700/50 rounded-xl px-4 py-3 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all placeholder:text-zinc-500"
+                placeholder="Platform (e.g. Netflix)"
+                className="flex-1 bg-zinc-900/80 border border-zinc-700/50 rounded-xl px-4 py-2.5 md:py-3 text-sm md:text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all placeholder:text-zinc-500"
               />
               {inputType === 'tv' && (
                 <input
                   type="text"
                   value={inputSeason}
                   onChange={(e) => setInputSeason(e.target.value)}
-                  placeholder="Season (e.g., 1)"
-                  className="md:w-32 bg-zinc-900/80 border border-zinc-700/50 rounded-xl px-4 py-3 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all placeholder:text-zinc-500"
+                  placeholder="Season"
+                  className="md:w-32 bg-zinc-900/80 border border-zinc-700/50 rounded-xl px-4 py-2.5 md:py-3 text-sm md:text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all placeholder:text-zinc-500"
                 />
               )}
-            </div>
-
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  value={inputSummary}
-                  onChange={(e) => setInputSummary(e.target.value)}
-                  placeholder={isFetchingSummary ? "Fetching summary..." : "Brief one-line summary (optional)..."}
-                  disabled={isFetchingSummary}
-                  className="w-full bg-zinc-900/80 border border-zinc-700/50 rounded-xl pl-4 pr-10 py-3 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all placeholder:text-zinc-500 disabled:opacity-50"
-                />
-                {isFetchingSummary ? (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-indigo-400 animate-spin">
-                    <Loader2 size={18} />
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => fetchSummary(true)}
-                    disabled={!inputValue.trim()}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-indigo-400 disabled:opacity-30 disabled:hover:text-zinc-500 transition-colors"
-                    title="Auto-fetch summary"
-                  >
-                    <Sparkles size={18} />
-                  </button>
-                )}
-              </div>
               <button
                 type="submit"
                 disabled={!inputValue.trim() || isFetchingSummary}
-                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:hover:bg-indigo-600 disabled:cursor-not-allowed text-white px-8 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95 md:w-auto"
+                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:hover:bg-indigo-600 disabled:cursor-not-allowed text-white px-6 py-2.5 md:py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95 md:w-auto text-sm md:text-base"
               >
-                <Plus size={20} />
-                <span>Add</span>
+                {isFetchingSummary ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+                <span>{isFetchingSummary ? 'Fetching...' : 'Add'}</span>
               </button>
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
+
+        {/* Mobile Tabs */}
+        <div className="flex md:hidden bg-zinc-900/60 p-1 rounded-2xl mb-6 border border-zinc-800/50 sticky top-4 z-30 backdrop-blur-md">
+          {COLUMNS.map((col) => (
+            <button
+              key={col.id}
+              onClick={() => setActiveTab(col.id)}
+              className={`flex-1 flex flex-col items-center py-2.5 rounded-xl transition-all ${
+                activeTab === col.id 
+                  ? 'bg-zinc-800 text-zinc-100 shadow-sm' 
+                  : 'text-zinc-500'
+              }`}
+            >
+              <div className={activeTab === col.id ? col.color : ''}>
+                {col.icon}
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider mt-1">{col.id.split(' ')[0]}</span>
+            </button>
+          ))}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 pt-4 md:pt-8 pb-12">
           {COLUMNS.map((col) => {
             const isMiddle = col.id === 'Currently Watching';
+            const isVisible = activeTab === col.id;
+            
             return (
               <div
                 key={col.id}
@@ -300,6 +358,8 @@ export default function App() {
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDropOnColumn(e, col.id)}
                 className={`border rounded-3xl p-5 flex flex-col transition-all duration-300 ${
+                  isVisible ? 'flex' : 'hidden md:flex'
+                } ${
                   isMiddle 
                     ? 'md:-translate-y-6 md:min-h-[660px] shadow-2xl bg-zinc-800/40 border-zinc-700/60' 
                     : 'md:min-h-[600px] bg-zinc-900/40 border-zinc-800/50'
@@ -380,29 +440,85 @@ export default function App() {
                             </div>
                           )}
 
-                          {(item.season || item.platform) && (
-                            <div className="text-[11px] font-medium text-zinc-400 mt-2.5 flex items-center gap-2 flex-wrap">
-                              {item.type === 'tv' && item.season && (
-                                <span className="bg-zinc-900/80 border border-zinc-700/50 px-2 py-0.5 rounded-md text-purple-300">
-                                  Season {item.season}
+                          <div className="text-[11px] font-medium text-zinc-400 mt-2.5 flex items-center gap-2 flex-wrap">
+                            {item.type === 'tv' && (
+                              <div className="group/field relative">
+                                <span className="bg-zinc-900/80 border border-zinc-700/50 px-2 py-0.5 rounded-md text-purple-300 cursor-pointer hover:bg-zinc-800 transition-colors flex items-center gap-1">
+                                  S{item.season || '?'}
+                                  <Pencil size={8} className="opacity-0 group-hover/field:opacity-100" />
                                 </span>
-                              )}
-                              {item.platform && (
-                                <span className="bg-zinc-900/80 border border-zinc-700/50 px-2 py-0.5 rounded-md text-zinc-300">
-                                  {item.platform}
-                                </span>
-                              )}
+                                <input 
+                                  type="text"
+                                  defaultValue={item.season || ''}
+                                  onBlur={(e) => handleUpdateItem(item.id, { season: e.target.value })}
+                                  onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+                                  className="absolute inset-0 w-full opacity-0 focus:opacity-100 bg-zinc-900 border border-indigo-500 rounded-md px-2 py-0.5 text-purple-300 outline-none z-10"
+                                />
+                              </div>
+                            )}
+                            
+                            <div className="group/field relative">
+                              <span className="bg-zinc-900/80 border border-zinc-700/50 px-2 py-0.5 rounded-md text-zinc-300 cursor-pointer hover:bg-zinc-800 transition-colors flex items-center gap-1">
+                                {item.platform || 'Add OTT'}
+                                <Pencil size={8} className="opacity-0 group-hover/field:opacity-100" />
+                              </span>
+                              <input 
+                                type="text"
+                                defaultValue={item.platform || ''}
+                                onBlur={(e) => handleUpdateItem(item.id, { platform: e.target.value })}
+                                onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+                                className="absolute inset-0 w-full opacity-0 focus:opacity-100 bg-zinc-900 border border-indigo-500 rounded-md px-2 py-0.5 text-zinc-300 outline-none z-10"
+                              />
                             </div>
-                          )}
+                          </div>
                         </div>
                         
-                        <button 
-                          onClick={() => handleDelete(item.id)}
-                          className="absolute right-3 top-4 text-zinc-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                          aria-label="Delete item"
-                        >
-                          <X size={16} />
-                        </button>
+                        <div className="absolute right-3 top-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={() => startEditing(item)}
+                            className="text-zinc-500 hover:text-indigo-400 transition-colors"
+                            aria-label="Edit item"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          
+                          {/* Mobile Quick Move Button */}
+                          <div className="md:hidden relative">
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowMoveMenu(showMoveMenu === item.id ? null : item.id);
+                              }}
+                              className="text-zinc-500 hover:text-amber-400 transition-colors"
+                              aria-label="Move item"
+                            >
+                              <ArrowRightLeft size={16} />
+                            </button>
+                            
+                            {showMoveMenu === item.id && (
+                              <div className="absolute right-0 top-full mt-2 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-40 py-1 min-w-[140px] animate-in fade-in slide-in-from-top-2 duration-200">
+                                {COLUMNS.filter(c => c.id !== item.column).map(c => (
+                                  <button
+                                    key={c.id}
+                                    onClick={() => moveItem(item.id, c.id)}
+                                    className="w-full text-left px-4 py-2 text-xs font-medium hover:bg-zinc-800 transition-colors flex items-center gap-2"
+                                  >
+                                    <span className={c.color}>{c.icon}</span>
+                                    <span>Move to {c.id.split(' ')[0]}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <button 
+                            onClick={() => handleDelete(item.id)}
+                            className="text-zinc-500 hover:text-red-400 transition-colors"
+                            aria-label="Delete item"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   
@@ -417,6 +533,86 @@ export default function App() {
           })}
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {editingItemId && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+              <h3 className="text-xl font-semibold text-zinc-100">Edit Details</h3>
+              <button 
+                onClick={() => setEditingItemId(null)}
+                className="text-zinc-500 hover:text-zinc-300 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1.5 ml-1">Title</label>
+                <input 
+                  type="text"
+                  value={editForm.title || ''}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1.5 ml-1">Platform</label>
+                  <input 
+                    type="text"
+                    value={editForm.platform || ''}
+                    onChange={(e) => setEditForm({ ...editForm, platform: e.target.value })}
+                    placeholder="e.g. Netflix"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
+                  />
+                </div>
+                {editForm.type === 'tv' && (
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1.5 ml-1">Season</label>
+                    <input 
+                      type="text"
+                      value={editForm.season || ''}
+                      onChange={(e) => setEditForm({ ...editForm, season: e.target.value })}
+                      placeholder="e.g. 1"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1.5 ml-1">Summary</label>
+                <textarea 
+                  rows={3}
+                  value={editForm.summary || ''}
+                  onChange={(e) => setEditForm({ ...editForm, summary: e.target.value })}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="p-6 bg-zinc-950/50 border-t border-zinc-800 flex gap-3">
+              <button 
+                onClick={() => setEditingItemId(null)}
+                className="flex-1 px-4 py-3 rounded-xl font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={saveEdit}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95"
+              >
+                <Save size={18} />
+                <span>Save Changes</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
